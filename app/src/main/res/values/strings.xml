@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">footing forecast</string>
+    <string name="textView_Title">Welcome, sign in to your google account</string>
+    <string name="textView_About">In USA, about 28,131 lbs of CO2e or about 44% of a
+        carbon footprint of an average American is associated with home electricity use.
+        You can greatly reduce your carbon footprint by switching to renewable energy such as solar power.</string>
+    <string name="textView_AboutContent">Many of our daily activities cause rise in greenhouse gases.
+        This app calculates your carbon foot print over time. By calculating your daily emissions, we are able to forecast
+        a model for your future emissions. We can shows areas where you can cut and what effects those areas will have.</string>
+    <string name="title_foot">my Foot</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="title_annual_stats">Annual Stats</string>
+    <string name="title_forecast">Forecast</string>
+    <string name="title_graphs">Graphs</string>
+
+</resources>

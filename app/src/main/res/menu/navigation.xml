@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/navigation_dashboard"
+        android:icon="@drawable/ic_dashboard_black_24dp"
+        android:title="@string/title_dashboard" />
+
+    <item
+        android:id="@+id/navigation_foot"
+        android:icon="@drawable/ic_pets_black_24dp"
+        android:title="@string/title_foot" />
+
+    <item
+        android:id="@+id/navigation_annual"
+        android:icon="@drawable/ic_baseline_calendar_today_24px"
+        android:title="@string/title_annual_stats" />
+
+    <item
+        android:id="@+id/navigation_forecast"
+        android:icon="@drawable/ic_baseline_timelapse_24px"
+        android:title="@string/title_forecast" />
+
+    <item
+        android:id="@+id/navigation_graphs"
+        android:icon="@drawable/ic_baseline_show_chart_24px"
+        android:title="@string/title_graphs" />
+
+</menu>
