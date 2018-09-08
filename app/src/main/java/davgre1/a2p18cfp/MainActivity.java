@@ -25,12 +25,15 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +43,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, GoogleApiClient.OnConnectionFailedListener {
 
     private SignInButton sIgnInButton; // Signing button
-    private GoogleSignInOptions googleSignInOptions; // Signing Options
+    private GoogleSignInClient mGoogleSignInClient; // Signing Options
     private GoogleApiClient mGoogleApiClient; // google api client
 
     private static String _email = "";
@@ -71,6 +74,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         //************************************//
 
+        // Configure sign-in to request the user's ID, email address, and basic
+        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+        // Build a GoogleSignInClient with the options specified by gso.
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+        // Initializing signinbutton
+        sIgnInButton = (SignInButton) findViewById(R.id.sign_in_button);
+        // Set the dimensions of the sign-in button.
+        SignInButton signInButton = findViewById(R.id.sign_in_button);
+        signInButton.setSize(SignInButton.SIZE_STANDARD);
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
+                .addApiIfAvailable(Auth.GOOGLE_SIGN_IN_API, gso)
+                .build();
+        // Setting onclick listener to signing button
+        sIgnInButton.setOnClickListener(this);
+
+        //************************************//
+
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
@@ -98,25 +122,98 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         //************************************//
 
-        // Configure sign-in to request the user's ID, email address, and basic
-        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
-        googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
-        // Initializing signinbutton
-        sIgnInButton = (SignInButton) findViewById(R.id.sign_in_button);
-        sIgnInButton.setSize(SignInButton.SIZE_WIDE);
-        sIgnInButton.setScopes(googleSignInOptions.getScopeArray());
-        // Build a GoogleSignInClient with the options specified by gso.
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
-                .addApiIfAvailable(Auth.GOOGLE_SIGN_IN_API, googleSignInOptions)
-                .build();
-        // Setting onclick listener to signing button
-        sIgnInButton.setOnClickListener(this);
+    }
+
+    @Override // Authentication of Sign In from Google API
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 100) {
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            handleSignInResult(task);
+        }
+    }
+
+    // After the signing we are calling this function, SECOND
+    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
+        try {
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+            if (account != null) {
+                String personEmail = new String(account.getEmail());
+                emailValidation(personEmail);
+            }
+        } catch (ApiException e) {
+            Log.w("Auth", "signInResult:failed code=" + e.getStatusCode());
+        }
+    }
+
+    @Override// Signing In, FIRST
+    public void onClick(View v) {
+        if (v == sIgnInButton) {
+            Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+            startActivityForResult(signInIntent, 100);
+        }
+    }
+
+    @Override // If connection to API fails, show results
+    public void onConnectionFailed(ConnectionResult connectionResult) {}
+
+    // Creates action bar for 'Sign Out' button
+    public boolean onCreateOptionsMenu(Menu ab) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.action_bar, ab);
+        signOut = ab.findItem(R.id.action_signout);
+        return super.onCreateOptionsMenu(ab);
+    }
+
+    @Override // If 'Sign Out' is selected, return to Sign In
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch(item.getItemId()) {
+            //TODO
+            case R.id.action_signout:
+                freshSignIn(); // Cleans any data that might have leaked
+                freshStart();
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    // Clearing ALL data entries
+    public void freshStart() {
+
+        field1.setText("");
+        field2.setText("");
+        field3.setText("");
+        field4.setText("");
+        field5.setText("");
+        field6.setText("");
+        field7.setText("");
+        field8.setText("");
+        field9.setText("");
+        field10.setText("");
+        field11.setText("");
+        field12.setText("");
+//        mean.removeAll(mean);
 
     }
 
+    // Fresh Sign In UI
+    public void freshSignIn() {
+
+        if(mGoogleApiClient.isConnected()) {
+            mGoogleSignInClient.signOut();
+            mGoogleApiClient.disconnect();
+            mGoogleApiClient.connect();}
+
+        sIgnInButton.setVisibility(View.VISIBLE); // Sign in button is now invisible
+        signOut.setVisible(false); // Sign out button is now visible
+        title.setVisibility(View.VISIBLE);
+        setTitle("footing forecast");
+
+    }
+
+    // Validates users email
     public void emailValidation(String email) {
 
         DatabaseAccess repo = new DatabaseAccess(this);
@@ -144,6 +241,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             Log.i("EMAIL? ", "NO");
             Toast.makeText(this, "No Email found in our database", Toast.LENGTH_LONG).show();
+            freshSignIn(); // resets app sign in
         }
 
     }
@@ -210,7 +308,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         field_table.setVisibility(View.VISIBLE);
         chart.setVisibility(View.GONE);
 
-        title.setText("Inidividual Footprint");
+        title.setText("Individual Footprint");
         field3.setText("Footprint: " + ifp);
 
     }
@@ -309,25 +407,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    // Clearing ALL data entries
-    public void clearData() {
-
-        field1.setText("");
-        field2.setText("");
-        field3.setText("");
-        field4.setText("");
-        field5.setText("");
-        field6.setText("");
-        field7.setText("");
-        field8.setText("");
-        field9.setText("");
-        field10.setText("");
-        field11.setText("");
-        field12.setText("");
-//        mean.removeAll(mean);
-
-    }
-
     // Navigation View, Tab selects
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -339,27 +418,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 case R.id.navigation_dashboard:
                     //TODO
-                    clearData();
+                    freshStart();
                     getPerson_Stats(_email);
                     return true;
                 case R.id.navigation_foot:
                     //TODO
-                    clearData();
+                    freshStart();
                     getFootprint(individual_footprint);
                     return true;
                 case R.id.navigation_annual:
                     //TODO
-                    clearData();
+                    freshStart();
                     getAnnual_Stats(_email);
                     return true;
                 case R.id.navigation_forecast:
                     //TODO
-                    clearData();
+                    freshStart();
                     getGraph(q1, year, "Quarter 1");
                     return true;
                 case R.id.navigation_graphs:
                     //TODO
-                    clearData();
+                    freshStart();
                     getGraph(mean, year, "Mean of...");
                     return true;
             }
@@ -369,70 +448,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     };
 
 
-    @Override // Authentication of Sign In from Google API
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 100) {
-            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            handleSignInResult(result);
-        }
-    }
-
-    // After the signing we are calling this function, SECOND
-    private void handleSignInResult(GoogleSignInResult result) {
-        // If the login succeed
-        if (result.isSuccess()) {
-            // Getting google account information
-            GoogleSignInAccount acct = result.getSignInAccount();
-            // Set email
-            String email  = new String(acct.getEmail());
-            emailValidation(email);
-        } else {
-            Toast.makeText(this, "Login Failed", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    @Override// Signing In, FIRST
-    public void onClick(View v) {
-        if (v == sIgnInButton) {
-            Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
-            startActivityForResult(signInIntent, 100);
-        }
-    }
-
-    @Override // If connection to API fails, show results
-    public void onConnectionFailed(ConnectionResult connectionResult) {}
-
-    // Creates action bar for 'Sign Out' button
-    public boolean onCreateOptionsMenu(Menu ab) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.action_bar, ab);
-        signOut = ab.findItem(R.id.action_signout);
-        return super.onCreateOptionsMenu(ab);
-    }
-
-    @Override // If 'Sign Out' is selected, return to Sign In
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        switch(item.getItemId()) {
-            //TODO
-            case R.id.action_signout:
-                if(mGoogleApiClient.isConnected()) {
-                    Auth.GoogleSignInApi.signOut(mGoogleApiClient);
-                    mGoogleApiClient.disconnect();
-                    mGoogleApiClient.connect();}
-
-                sIgnInButton.setVisibility(View.VISIBLE); // Sign in button is now invisible
-                signOut.setVisible(false); // Sign out button is now visible
-                title.setVisibility(View.VISIBLE);
-
-                clearData(); // Cleans any data that might have leaked
-
-                break;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
 
 
 }
